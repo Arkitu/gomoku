@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crossterm::style::Stylize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Color {
@@ -15,16 +16,32 @@ impl Color {
             Self::None => Self::None
         }
     }
+    pub fn get_char(&self) -> char {
+        match self {
+            Self::White => '●',
+            Self::Black => '○',
+            Self::None => '•'
+        }
+    }
+}
+impl std::fmt::Display for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::White => write!(f, "White"),
+            Self::Black => write!(f, "Black"),
+            Self::None => write!(f, "None")
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct Cell {
-    color: Color,
-    x: isize,
-    y: isize
+    pub color: Color,
+    pub x: isize,
+    pub y: isize
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Board {
     cells: HashMap<(isize, isize), Color>,
     pub max_x: isize,
@@ -86,7 +103,17 @@ pub enum GameError {
     IllegalMove,
     GameOver
 }
+impl std::fmt::Display for GameError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GameError::IllegalMove => write!(f, "Illegal move"),
+            GameError::GameOver => write!(f, "Game over")
+        }
+    }
+}
+impl std::error::Error for GameError {}
 
+#[derive(Clone)]
 pub struct Game {
     pub board: Board,
     pub turn: Color
@@ -158,6 +185,10 @@ impl Game {
         }
         false
     }
+    pub fn play_no_win_check(&mut self, pos: (isize, isize)) {
+        self.board.set(pos, self.turn);
+        self.turn = self.turn.inverse();
+    }
     /// Returns the winner if there is one or None
     pub fn play_unchecked(&mut self, pos: (isize, isize)) -> Color {
         self.board.set(pos, self.turn);
@@ -194,14 +225,14 @@ impl Game {
         }
         Ok(Color::None)
     }
+    pub fn unplay(&mut self, pos: (isize, isize)) {
+        self.board.set(pos, Color::None);
+        self.turn = self.turn.inverse();
+    }
     pub fn print(&self) {
         for y in self.board.min_y..=self.board.max_y {
             for x in self.board.min_x..=self.board.max_x {
-                match self.board.get(&(x, y)) {
-                    Color::White => print!("●"),
-                    Color::Black => print!("○"),
-                    Color::None => print!("-")
-                }
+                print!("{}", self.board.get(&(x, y)).get_char().on_dark_grey());
             }
             println!();
         }
