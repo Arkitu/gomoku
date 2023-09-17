@@ -65,7 +65,7 @@ impl AI {
 
         score
     }
-    pub fn get_move(&self, game: &Game) -> (isize, isize) {
+    pub fn get_best_move(&self, game: &Game) -> (isize, isize) {
         if game.turn != self.color {
             panic!("Playing turn whereas its not ai's turn")
         }
@@ -107,6 +107,6 @@ impl AI {
         best_move
     }
     pub fn play_move(&self, game: &mut Game) {
-        game.play(self.get_move(&game)).unwrap();
+        game.play(self.get_best_move(&game)).unwrap();
     }
 }
