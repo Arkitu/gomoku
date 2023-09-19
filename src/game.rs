@@ -47,7 +47,8 @@ pub struct Board {
     pub max_x: isize,
     pub min_x: isize,
     pub max_y: isize,
-    pub min_y: isize
+    pub min_y: isize,
+    pub last_move: Option<(isize, isize)>
 }
 impl Board {
     pub fn new() -> Board {
@@ -56,7 +57,8 @@ impl Board {
             max_x: 0,
             min_x: 0,
             max_y: 0,
-            min_y: 0
+            min_y: 0,
+            last_move: None
         }
     }
     pub fn get(&self, pos: &(isize, isize)) -> Color {

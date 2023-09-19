@@ -10,8 +10,12 @@ impl AI {
         }
     }
     /// More means better
-    pub fn evaluate(&self, game: &Game) -> isize {
+    pub fn evaluate(&self, game: &Game, recursion_lvl: usize) -> isize {
         let mut score = 0;
+
+        if recursion_lvl > 0 {
+            AI::new(self.color.inverse()).
+        }
 
         let mut line_color = Color::None;
         let mut counter: isize = 0;
@@ -65,7 +69,7 @@ impl AI {
 
         score
     }
-    pub fn get_best_move(&self, game: &Game) -> (isize, isize) {
+    pub fn get_best_move(&self, game: &Game, recursion_lvl: usize) -> (isize, isize) {
         if game.turn != self.color {
             panic!("Playing turn whereas its not ai's turn")
         }
@@ -92,7 +96,7 @@ impl AI {
                     best_move = pos;
                     best_score = isize::MAX;
                 }
-                let score = self.evaluate(&game);
+                let score = self.evaluate(&game, recursion_lvl);
                 if score > best_score {
                     best_move = pos;
                     best_score = score;
@@ -107,6 +111,6 @@ impl AI {
         best_move
     }
     pub fn play_move(&self, game: &mut Game) {
-        game.play(self.get_best_move(&game)).unwrap();
+        game.play(self.get_best_move(&game, 3)).unwrap();
     }
 }
