@@ -10,11 +10,29 @@ impl AI {
         }
     }
     /// More means better
-    pub fn evaluate(&self, game: &Game, recursion_lvl: usize) -> isize {
+    pub fn evaluate(&self, game: &mut Game, recursion_lvl: usize) -> isize {
         let mut score = 0;
 
         if recursion_lvl > 0 {
-            AI::new(self.color.inverse()).
+            let min_x = game.board.min_x;
+            let max_x = game.board.max_x;
+            let min_y = game.board.min_y;
+            let max_y = game.board.max_y;
+            let mut moves: Vec<(isize, isize)> = Vec::with_capacity(recursion_lvl);
+            for i in 1..=recursion_lvl {
+                let pos = AI::new(game.turn).get_best_move(game, recursion_lvl-i);
+                game.play(pos).unwrap();
+                moves.push(pos);
+            }
+            score = self.evaluate(game, 0);
+            for m in moves.iter().rev() {
+                game.unplay(*m);
+            }
+            game.board.min_x = min_x;
+            game.board.max_x = max_x;
+            game.board.min_y = min_y;
+            game.board.max_y = max_y;
+            return score;
         }
 
         let mut line_color = Color::None;
@@ -69,11 +87,10 @@ impl AI {
 
         score
     }
-    pub fn get_best_move(&self, game: &Game, recursion_lvl: usize) -> (isize, isize) {
+    pub fn get_best_move(&self, game: &mut Game, recursion_lvl: usize) -> (isize, isize) {
         if game.turn != self.color {
             panic!("Playing turn whereas its not ai's turn")
         }
-        let mut game = (*game).clone();
         let min_x = game.board.min_x;
         let max_x = game.board.max_x;
         let min_y = game.board.min_y;
@@ -88,15 +105,11 @@ impl AI {
                     continue
                 }
                 game.play_no_win_check(pos);
-                if game.check_win_for_cell(Cell {
-                    color: self.color,
-                    x: pos.0,
-                    y: pos.1
-                }) {
+                if game.check_win() {
                     best_move = pos;
                     best_score = isize::MAX;
                 }
-                let score = self.evaluate(&game, recursion_lvl);
+                let score = self.evaluate(game, recursion_lvl);
                 if score > best_score {
                     best_move = pos;
                     best_score = score;
@@ -111,6 +124,6 @@ impl AI {
         best_move
     }
     pub fn play_move(&self, game: &mut Game) {
-        game.play(self.get_best_move(&game, 3)).unwrap();
+        game.play(self.get_best_move(&mut (*game).clone(), 3)).unwrap();
     }
 }

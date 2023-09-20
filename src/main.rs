@@ -7,7 +7,21 @@ use game::{Game, GameError, Color};
 mod ai;
 use ai::AI;
 
+#[derive(PartialEq, Eq)]
+enum GameMode {
+    Players,
+    PlayerIA,
+    IAs
+}
+
 fn main() -> Result<()> {
+    let mut game_mode = GameMode::PlayerIA;
+    for arg in std::env::args() {
+        match arg.as_str() {
+            "--players" => game_mode = GameMode::Players,
+            _ => {}
+        }
+    }
     let mut game = Game::new();
     let ai = AI::new(Color::Black);
     loop {
@@ -42,7 +56,9 @@ fn main() -> Result<()> {
                 break
             }
         }
-        ai.play_move(&mut game);
+        if game_mode != GameMode::Players {
+            ai.play_move(&mut game);
+        }
     }
     Ok(())
 }

@@ -47,8 +47,7 @@ pub struct Board {
     pub max_x: isize,
     pub min_x: isize,
     pub max_y: isize,
-    pub min_y: isize,
-    pub last_move: Option<(isize, isize)>
+    pub min_y: isize
 }
 impl Board {
     pub fn new() -> Board {
@@ -57,8 +56,7 @@ impl Board {
             max_x: 0,
             min_x: 0,
             max_y: 0,
-            min_y: 0,
-            last_move: None
+            min_y: 0
         }
     }
     pub fn get(&self, pos: &(isize, isize)) -> Color {
@@ -118,13 +116,15 @@ impl std::error::Error for GameError {}
 #[derive(Clone)]
 pub struct Game {
     pub board: Board,
-    pub turn: Color
+    pub turn: Color,
+    pub last_move: Option<(isize, isize)>
 }
 impl Game {
     pub fn new() -> Game {
         Game {
             board: Board::new(),
-            turn: Color::White
+            turn: Color::White,
+            last_move: None
         }
     }
     /// Check if the game is over and return the winner. A player win if he has a line of 5 stones.
@@ -187,18 +187,28 @@ impl Game {
         }
         false
     }
+    /// Check win for last move
+    pub fn check_win(&self) -> bool {
+        let last_move = match self.last_move {
+            Some(lm) => lm,
+            None => return false
+        };
+        self.check_win_for_cell(Cell {
+            x: last_move.0,
+            y: last_move.1,
+            color: self.turn.inverse()
+        })
+    }
     pub fn play_no_win_check(&mut self, pos: (isize, isize)) {
         self.board.set(pos, self.turn);
+        self.last_move = Some(pos);
         self.turn = self.turn.inverse();
     }
     /// Returns the winner if there is one or None
     pub fn play_unchecked(&mut self, pos: (isize, isize)) -> Color {
         self.board.set(pos, self.turn);
-        if self.check_win_for_cell(Cell {
-            x: pos.0,
-            y: pos.1,
-            color: self.turn
-        }) {
+        self.last_move = Some(pos);
+        if self.check_win() {
             let winner = self.turn.clone();
             self.turn = Color::None;
             winner
