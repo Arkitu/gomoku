@@ -5,7 +5,7 @@ mod game;
 use game::{Game, GameError, Color};
 
 mod ai;
-use ai::AI;
+use ai::ManualAI;
 
 #[derive(PartialEq, Eq)]
 enum GameMode {
@@ -23,7 +23,7 @@ fn main() -> Result<()> {
         }
     }
     let mut game = Game::new();
-    let ai = AI::new(Color::Black);
+    let ai = ManualAI::new(Color::Black);
     loop {
         game.print();
         let mut m: Option<(isize, isize)> = None;

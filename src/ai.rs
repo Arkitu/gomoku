@@ -3,9 +3,14 @@ use crate::game::{Game, Color, Board, Cell};
 pub struct AI {
     pub color: Color
 }
-impl AI {
-    pub fn new(color: Color) -> AI {
-        AI {
+
+
+pub struct ManualAI {
+    pub color: Color
+}
+impl ManualAI {
+    pub fn new(color: Color) -> ManualAI {
+        ManualAI {
             color
         }
     }
@@ -20,7 +25,7 @@ impl AI {
             let max_y = game.board.max_y;
             let mut moves: Vec<(isize, isize)> = Vec::with_capacity(recursion_lvl);
             for i in 1..=recursion_lvl {
-                let pos = AI::new(game.turn).get_best_move(game, recursion_lvl-i);
+                let pos = ManualAI::new(game.turn).get_best_move(game, recursion_lvl-i);
                 game.play(pos).unwrap();
                 moves.push(pos);
             }
