@@ -42,16 +42,16 @@ pub struct Cell {
 }
 
 #[derive(Debug, Clone)]
-pub struct Board {
+pub struct InfiniteBoard {
     cells: HashMap<(isize, isize), Color>,
     pub max_x: isize,
     pub min_x: isize,
     pub max_y: isize,
     pub min_y: isize
 }
-impl Board {
-    pub fn new() -> Board {
-        Board {
+impl InfiniteBoard {
+    pub fn new() -> Self {
+        Self {
             cells: HashMap::new(),
             max_x: 0,
             min_x: 0,
@@ -98,6 +98,8 @@ impl Board {
     }
 }
 
+type Board = grid::Grid<Color>;
+
 #[derive(Debug)]
 pub enum GameError {
     IllegalMove,
@@ -122,7 +124,7 @@ pub struct Game {
 impl Game {
     pub fn new() -> Game {
         Game {
-            board: Board::new(),
+            board: Board::new(100, 100),
             turn: Color::White,
             last_move: None
         }
@@ -131,7 +133,7 @@ impl Game {
     pub fn check_win_for_cell(&self, cell: Cell) -> bool {
         let mut counter = 0;
         for x in (cell.x - 4).max(self.board.min_x)..=(cell.x + 4).min(self.board.max_x) {
-            match self.board.get(&(x, cell.y)) {
+            match self.board.get(x, cell.y) {
                 Color::None => counter = 0,
                 c => if c == cell.color {
                     counter += 1;

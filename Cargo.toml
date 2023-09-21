@@ -9,3 +9,4 @@ edition = "2021"
 anyhow = { version = "*", features = ["backtrace"] }
 crossterm = "*"
 rurel = "*"
+grid = "*"
