@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "*", features = ["backtrace"] }
 crossterm = "*"
-rurel = "*"
 grid = "*"
+neat-gru = "*"

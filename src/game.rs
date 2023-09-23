@@ -3,11 +3,14 @@ use crossterm::style::Stylize;
 
 mod infinite;
 
+pub const MAX_HEIGHT: usize = 100;
+pub const MAX_WIDTH: usize = 100;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Color {
-    #[default]
     White,
     Black,
+    #[default]
     None
 }
 impl Color {
@@ -64,12 +67,12 @@ impl std::error::Error for GameError {}
 pub struct Game {
     pub board: Board,
     pub turn: Color,
-    pub last_move: Option<(isize, isize)>
+    pub last_move: Option<(usize, usize)>
 }
 impl Game {
     pub fn new() -> Game {
         Game {
-            board: Board::new(100, 100),
+            board: Board::new(MAX_HEIGHT, MAX_WIDTH),
             turn: Color::White,
             last_move: None
         }
@@ -77,60 +80,91 @@ impl Game {
     /// Check if the game is over and return the winner. A player win if he has a line of 5 stones.
     pub fn check_win_for_cell(&self, cell: Cell) -> bool {
         let mut counter = 0;
-        let line = self.board.iter_row(cell.y).[cell.x.saturating_sub(4)]
-        for x in (cell.x - 4).max(self.board.min_x)..=(cell.x + 4).min(self.board.max_x) {
-            match self.board.get(x, cell.y).unwrap() {
-                Color::None => counter = 0,
-                c => if c == cell.color {
+
+        let mut iter = self.board.iter_row(cell.y);
+        match iter.nth(cell.x.saturating_sub(4)).unwrap() {
+            Color::None => counter = 0,
+            c => if c == &cell.color {
+                counter += 1;
+                if counter >= 5 {
+                    return true
+                }
+            } else {
+                counter = 0
+            }
+        }
+        for _ in 0..9 {
+            match iter.next() {
+                Some(Color::None) => counter = 0,
+                Some(c) => if c == &cell.color {
                     counter += 1;
                     if counter >= 5 {
                         return true
                     }
                 } else {
                     counter = 0
+                },
+                None => break
+            }
+        }
+
+        counter = 0;
+
+        let mut iter = self.board.iter_col(cell.x);
+        match iter.nth(cell.y.saturating_sub(4)).unwrap() {
+            Color::None => counter = 0,
+            c => if c == &cell.color {
+                counter += 1;
+                if counter >= 5 {
+                    return true
                 }
+            } else {
+                counter = 0
+            }
+        }
+        for _ in 0..9 {
+            match iter.next() {
+                Some(Color::None) => counter = 0,
+                Some(c) => if c == &cell.color {
+                    counter += 1;
+                    if counter >= 5 {
+                        return true
+                    }
+                } else {
+                    counter = 0
+                },
+                None => break
+            }
+        }
+
+        counter = 0;
+        for pos in (cell.x.saturating_sub(4)..=(cell.x + 4)).zip(cell.y.saturating_sub(4)..=(cell.y + 4)) {
+            match self.board.get(pos.0, pos.1) {
+                Some(Color::None) => counter = 0,
+                Some(c) => if c == &cell.color {
+                    counter += 1;
+                    if counter >= 5 {
+                        return true
+                    }
+                } else {
+                    counter = 0
+                },
+                None => break
             }
         }
         counter = 0;
-        for y in (cell.y - 4).max(self.board.min_y)..=(cell.y + 4).min(self.board.max_y) {
-            match self.board.get(&(cell.x, y)) {
-                Color::None => counter = 0,
-                c => if c == cell.color {
+        for pos in (cell.x.saturating_sub(4)..=(cell.x + 4)).zip((cell.y.saturating_sub(4)..=(cell.y + 4)).rev()) {
+            match self.board.get(pos.0, pos.1) {
+                Some(Color::None) => counter = 0,
+                Some(c) => if c == &cell.color {
                     counter += 1;
                     if counter >= 5 {
                         return true
                     }
                 } else {
                     counter = 0
-                }
-            }
-        }
-        counter = 0;
-        for pos in ((cell.x - 4).max(self.board.min_x)..=(cell.x + 4).min(self.board.max_x)).zip((cell.y - 4).max(self.board.min_y)..=(cell.y + 4).min(self.board.max_y)) {
-            match self.board.get(&pos) {
-                Color::None => counter = 0,
-                c => if c == cell.color {
-                    counter += 1;
-                    if counter >= 5 {
-                        return true
-                    }
-                } else {
-                    counter = 0
-                }
-            }
-        }
-        counter = 0;
-        for pos in ((cell.x - 4).max(self.board.min_x)..=(cell.x + 4).min(self.board.max_x)).zip(((cell.y - 4).max(self.board.min_y)..=(cell.y + 4).min(self.board.max_y)).rev()) {
-            match self.board.get(&pos) {
-                Color::None => counter = 0,
-                c => if c == cell.color {
-                    counter += 1;
-                    if counter >= 5 {
-                        return true
-                    }
-                } else {
-                    counter = 0
-                }
+                },
+                None => break
             }
         }
         false
@@ -147,14 +181,14 @@ impl Game {
             color: self.turn.inverse()
         })
     }
-    pub fn play_no_win_check(&mut self, pos: (isize, isize)) {
-        self.board.set(pos, self.turn);
+    pub fn play_no_win_check(&mut self, pos: (usize, usize)) {
+        *self.board.get_mut(pos.0, pos.1).unwrap() = self.turn;
         self.last_move = Some(pos);
         self.turn = self.turn.inverse();
     }
     /// Returns the winner if there is one or None
-    pub fn play_unchecked(&mut self, pos: (isize, isize)) -> Color {
-        self.board.set(pos, self.turn);
+    pub fn play_unchecked(&mut self, pos: (usize, usize)) -> Color {
+        *self.board.get_mut(pos.0, pos.1).unwrap() = self.turn;
         self.last_move = Some(pos);
         if self.check_win() {
             let winner = self.turn.clone();
@@ -166,16 +200,16 @@ impl Game {
         }
     }
     /// Return Error if the move is illegal
-    pub fn play(&mut self, pos: (isize, isize)) -> Result<Color, GameError> {
+    pub fn play(&mut self, pos: (usize, usize)) -> Result<Color, GameError> {
         if self.turn == Color::None {
             return Err(GameError::GameOver)
         }
-        if self.board.get(&pos) != Color::None {
+        if self.board.get(pos.0, pos.1) != Some(&Color::None) {
             return Err(GameError::IllegalMove)
         }
         Ok(self.play_unchecked(pos))
     }
-    pub fn play_moves(&mut self, moves: &[(isize, isize)]) -> Result<Color, GameError> {
+    pub fn play_moves(&mut self, moves: &[(usize, usize)]) -> Result<Color, GameError> {
         for m in moves {
             match self.play(*m) {
                 Ok(Color::None) => (),
@@ -185,16 +219,16 @@ impl Game {
         }
         Ok(Color::None)
     }
-    pub fn unplay(&mut self, pos: (isize, isize)) {
-        self.board.set(pos, Color::None);
+    pub fn unplay(&mut self, pos: (usize, usize)) {
+        *self.board.get_mut(pos.0, pos.1).unwrap() = Color::None;
         self.turn = self.turn.inverse();
     }
     pub fn print(&self) {
-        for y in self.board.min_y..=self.board.max_y {
-            for x in self.board.min_x..=self.board.max_x {
-                print!("{}", self.board.get(&(x, y)).get_char().on_dark_grey());
+        for row in self.board.iter_rows() {
+            for c in row.map(|c| c.get_char().on_dark_grey()) {
+                print!("{}", c);
             }
-            println!();
+            println!()
         }
     }
 }
