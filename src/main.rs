@@ -19,11 +19,12 @@ fn main() -> Result<()> {
     for arg in std::env::args() {
         match arg.as_str() {
             "--players" => game_mode = GameMode::Players,
+            "--train" => AI::train(),
             _ => {}
         }
     }
     let mut game = Game::new();
-    let ai = AI::new(Color::Black);
+    let mut ai = AI::open();
     loop {
         game.print();
         let mut m: Option<(usize, usize)> = None;

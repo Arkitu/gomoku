@@ -3,8 +3,8 @@ use crossterm::style::Stylize;
 
 mod infinite;
 
-pub const MAX_HEIGHT: usize = 100;
-pub const MAX_WIDTH: usize = 100;
+pub const MAX_HEIGHT: usize = 5;
+pub const MAX_WIDTH: usize = 5;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Color {
@@ -81,20 +81,8 @@ impl Game {
     pub fn check_win_for_cell(&self, cell: Cell) -> bool {
         let mut counter = 0;
 
-        let mut iter = self.board.iter_row(cell.y);
-        match iter.nth(cell.x.saturating_sub(4)).unwrap() {
-            Color::None => counter = 0,
-            c => if c == &cell.color {
-                counter += 1;
-                if counter >= 5 {
-                    return true
-                }
-            } else {
-                counter = 0
-            }
-        }
-        for _ in 0..9 {
-            match iter.next() {
+        for x in cell.x.saturating_sub(4)..=(cell.x + 4) {
+            match self.board.get(x, cell.y) {
                 Some(Color::None) => counter = 0,
                 Some(c) => if c == &cell.color {
                     counter += 1;
@@ -109,21 +97,8 @@ impl Game {
         }
 
         counter = 0;
-
-        let mut iter = self.board.iter_col(cell.x);
-        match iter.nth(cell.y.saturating_sub(4)).unwrap() {
-            Color::None => counter = 0,
-            c => if c == &cell.color {
-                counter += 1;
-                if counter >= 5 {
-                    return true
-                }
-            } else {
-                counter = 0
-            }
-        }
-        for _ in 0..9 {
-            match iter.next() {
+        for y in cell.y.saturating_sub(4)..=(cell.y + 4) {
+            match self.board.get(cell.x, y) {
                 Some(Color::None) => counter = 0,
                 Some(c) => if c == &cell.color {
                     counter += 1;
@@ -178,7 +153,7 @@ impl Game {
         self.check_win_for_cell(Cell {
             x: last_move.0,
             y: last_move.1,
-            color: self.turn.inverse()
+            color: self.turn
         })
     }
     pub fn play_no_win_check(&mut self, pos: (usize, usize)) {
